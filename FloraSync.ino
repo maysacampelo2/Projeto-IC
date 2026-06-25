@@ -1,35 +1,33 @@
-// Biblioteca do led - neopixel 16
 #include <Adafruit_NeoPixel.h>
-//Biblioteca do solenoide
-#include <TimerOne.h> // obs: essa biblioteca específica foi importante para conseguirmos definir a frequência
-//definição da frequência
-#define FREQ 15061 //fomos testando uma combinação de frequência e PWM que simultaneamente fizesse o solenoide funcionar, 
-//a corrente não ficar tão alta e instável e o som do solenoide ficar mais baixo
+#include <Servo.h>
 
-const int potenciometro = A0; 
-const int solenoide = 9; 
-int pwm = 935; // o pwm e a frequência tem a mesma lógica
+Servo servomotor;
+const int potenciometro = A0;
+
+int primavera = 255;
+int verao = 255;
+int outono = 128;
+int inverno = 0;
 
 #define PIN 2
-#define NUMPIXELS 16;
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800); //configurações led
+#define NUMPIXELS 16
+
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void setup() {
-  pinMode(solenoide, OUTPUT);
   Serial.begin(9600);
   
   pixels.begin();
   pixels.show(); 
-
- 
+  
   randomSeed(analogRead(A1)); 
-  Timer1.initialize(1000000/FREQ); //a biblioteca pede aqui o período em microssegundos e colocamos assim pra conseguir mexer direto na frequência
-  Timer1.pwm(solenoide, 512);
+  
+  servomotor.attach(5);
+
 }
 
-bool impulso = true; //
-
 void loop() {
+  
   int valor = analogRead(potenciometro);
 
   //Primavera: colorido
@@ -45,51 +43,40 @@ void loop() {
     }
     
     pixels.show(); 
+    servomotor.write(0);
     
-    if (impulso){
-    	Timer1.setPwmDuty(solenoide, 1023);
-    }
-    else{
-      	Timer1.setPwmDuty(solenoide, pwm);
-    }
-    impulso = false;
 
-    
   // Verão - Verde
   } else if (valor < 512) {
 
+  Serial.println("Verão");
+    Serial.println(valor);
+    
     mudarCorFixa(0, 255, 0); 
+    servomotor.write(0);
     
-       if (impulso){
-       	Timer1.setPwmDuty(solenoide, 1023);
-    }
-    else{
-      	Timer1.setPwmDuty(solenoide, pwm);
-    }
-    impulso = false;
-    
-
+       
+   
   //Outono - Laranja
   } else if (valor < 768) {
     
+    Serial.println("Outono");
+    Serial.println(valor);
+
     mudarCorFixa(255, 100, 0); 
     
-    if (impulso){
-    	Timer1.setPwmDuty(solenoide, 1023);
-    }
-    else{
-      	Timer1.setPwmDuty(solenoide, pwm);
-    }
-    impulso = false;
+  servomotor.write(120);
     
 
   // Inverno - Desligado
   } else {
-    mudarCorFixa(0, 0, 0); // desliga os leds
+    Serial.println("Inverno");
+    Serial.println(valor);
+    mudarCorFixa(0, 0, 0);
     
-    Timer1.setPwmDuty(solenoide, 0);  // solta as folhas
-    impulso = true;
-   
+    servomotor.write(180);
+    
+  
   }
 
   delay(150);
